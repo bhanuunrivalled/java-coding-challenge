@@ -31,5 +31,5 @@
 
 ## Change management
 - If a requested change is large, split it into smaller steps and explain trade-offs.
-- Never implement more than 50 lines of code in a single task step without explicit user review and approval.
+- Never implement more than 100 lines of code in a single task step without explicit user review and approval.
 - Call out security, observability, and scaling impact in implementation notes.

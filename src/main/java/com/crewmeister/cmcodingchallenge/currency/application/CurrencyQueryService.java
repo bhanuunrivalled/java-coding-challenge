@@ -1,4 +1,6 @@
-package com.crewmeister.cmcodingchallenge.currency;
+package com.crewmeister.cmcodingchallenge.currency.application;
+
+import com.crewmeister.cmcodingchallenge.currency.infrastructure.FxRateRepository;
 
 import org.springframework.stereotype.Service;
 

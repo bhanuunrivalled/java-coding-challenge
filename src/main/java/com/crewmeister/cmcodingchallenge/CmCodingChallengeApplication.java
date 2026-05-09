@@ -1,6 +1,6 @@
 package com.crewmeister.cmcodingchallenge;
 
-import com.crewmeister.cmcodingchallenge.currency.CurrencyQueryService;
+import com.crewmeister.cmcodingchallenge.currency.application.CurrencyQueryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationRunner;

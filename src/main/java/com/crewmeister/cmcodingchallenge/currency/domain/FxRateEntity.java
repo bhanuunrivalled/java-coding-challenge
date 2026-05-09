@@ -1,4 +1,4 @@
-package com.crewmeister.cmcodingchallenge.currency;
+package com.crewmeister.cmcodingchallenge.currency.domain;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;

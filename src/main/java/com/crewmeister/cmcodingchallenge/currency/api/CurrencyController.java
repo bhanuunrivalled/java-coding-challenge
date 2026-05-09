@@ -1,4 +1,6 @@
-package com.crewmeister.cmcodingchallenge.currency;
+package com.crewmeister.cmcodingchallenge.currency.api;
+
+import com.crewmeister.cmcodingchallenge.currency.application.CurrencyQueryService;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
