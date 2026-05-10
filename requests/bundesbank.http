@@ -1,0 +1,18 @@
+### Bundesbank full-load request (upstream)
+GET https://api.statistiken.bundesbank.de/rest/data/BBEX3/D..EUR.BB.AC.000?detail=full
+Accept: application/vnd.sdmx.data+json;version=1.0.0
+
+### Upstream quick check: currencies only (small response)
+GET https://api.statistiken.bundesbank.de/rest/data/BBEX3/D..EUR.BB.AC.000?detail=nodata
+Accept: application/vnd.sdmx.data+json;version=1.0.0
+
+### Upstream quick check: only recent period (small response)
+GET https://api.statistiken.bundesbank.de/rest/data/BBEX3/D..EUR.BB.AC.000?startPeriod=2026-01-01&detail=dataonly
+Accept: application/vnd.sdmx.data+json;version=1.0.0
+
+### Local API: list available currencies
+GET http://localhost:8080/api/currencies
+Accept: application/json
+
+### Run app with startup full-load enabled, then call local API
+# ./mvnw spring-boot:run -Dspring-boot.run.arguments=--currency.full-load.run-on-startup=true

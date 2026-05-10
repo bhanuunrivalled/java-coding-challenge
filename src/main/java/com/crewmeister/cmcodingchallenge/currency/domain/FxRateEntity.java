@@ -29,4 +29,24 @@ public class FxRateEntity {
         this.rateDate = rateDate;
         this.rate = rate;
     }
+
+    public Long getId() {
+        return id;
+    }
+
+    public String getSeriesKey() {
+        return seriesKey;
+    }
+
+    public String getCurrency() {
+        return currency;
+    }
+
+    public LocalDate getRateDate() {
+        return rateDate;
+    }
+
+    public double getRate() {
+        return rate;
+    }
 }
