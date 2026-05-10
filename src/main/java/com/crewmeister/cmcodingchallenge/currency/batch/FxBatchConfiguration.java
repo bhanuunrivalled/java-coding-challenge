@@ -7,6 +7,7 @@ import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.core.launch.JobLauncher;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Configuration;
@@ -27,6 +28,9 @@ public class FxBatchConfiguration {
     private final Job deltaLoadJob;
     private final FxRateRepository fxRateRepository;
 
+    @Value("${fx.batch.full-load-on-startup}")
+    private boolean fullLoadOnStartup;
+
     public FxBatchConfiguration(JobLauncher jobLauncher,
             @Qualifier("fullLoadJob") Job fullLoadJob,
             @Qualifier("deltaLoadJob") Job deltaLoadJob,
@@ -40,6 +44,11 @@ public class FxBatchConfiguration {
     /** On startup: full load only if table is empty — once, ever. */
     @EventListener(ApplicationReadyEvent.class)
     public void runFullLoadIfEmpty() {
+        LOGGER.info("full load value on startup {}",fullLoadOnStartup);
+        if (!fullLoadOnStartup) {
+            LOGGER.info("Startup full load disabled by property fx.batch.full-load-on-startup=false");
+            return;
+        }
         if (fxRateRepository.count() > 0) {
             LOGGER.info("FX rate store already populated — skipping full load");
             return;

@@ -29,40 +29,16 @@
 - Keep images minimal, pinned, and reproducible.
 - Avoid baking secrets into images.
 
+## Local run instructions (May 2026 baseline)
+- Assume Java 25 is used for Maven/test commands in this project.
+- Use this exact format when running tests:
+  - `cd /Users/bhanu.akula/projects/java-coding-challenge`
+  - `JAVA_HOME=/opt/homebrew/opt/openjdk@25 PATH="/opt/homebrew/opt/openjdk@25/bin:$PATH" ./mvnw test -f pom.xml`
+- Use this exact format when running the app:
+  - `cd /Users/bhanu.akula/projects/java-coding-challenge`
+  - `JAVA_HOME=/opt/homebrew/opt/openjdk@25 PATH="/opt/homebrew/opt/openjdk@25/bin:$PATH" ./mvnw spring-boot:run -f pom.xml`
+
 ## Change management
 - If a requested change is large, split it into smaller steps and explain trade-offs.
 - Never implement more than 100 lines of code in a single task step without explicit user review and approval.
 - Call out security, observability, and scaling impact in implementation notes.
-
-## Design checker skill (Clean Architecture)
-When proposing or reviewing changes, run this design checker by default and report violations before coding:
-
-1. Dependency rule
-- Source dependencies must point inward: `api`/`batch`/`infrastructure` -> `service` -> `domain`.
-- Inner layers must not import framework/web/db/client details from outer layers.
-
-2. Package responsibility
-- `currency.api`: controllers, request/response mapping only.
-- `currency.batch`: batch job config, reader/processor/writer, scheduling/launch.
-- `currency.service`: application use-cases and orchestration.
-- `currency.domain`: core business model/rules.
-- `currency.infrastructure`: external clients, persistence adapters, repository implementations.
-
-3. Boundary data
-- Do not pass framework-specific objects across boundaries.
-- Use simple DTO/record structures when crossing adapter/use-case boundaries.
-
-4. Framework independence
-- Keep Spring Batch/JPA/HTTP annotations and APIs out of `domain` and, where practical, out of core `service` logic.
-
-5. Runtime separation intent
-- API reads from local store.
-- Batch owns upstream ingestion (full + delta).
-- API must not call upstream providers directly.
-
-6. Testability guardrails
-- Use-case logic should be unit-testable without booting Spring context.
-- API contracts should be covered by integration tests.
-- Batch transformation rules should have focused processor tests.
-
-If any rule is violated, list findings with severity and file references before implementing additional changes.

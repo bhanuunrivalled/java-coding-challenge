@@ -68,7 +68,7 @@ public class FxCsvImportConfiguration {
             "BBK_UNIT_MULT", "BBK_TITLE", "WEB_CATEGORY",
                 "BBK_COMM_GEN", "BBK_COMM_SRC", "OBS_STATUS",
                 "BBK_DIFF", "EXTRA_EMPTY");
-
+        tokenizer.setStrict(false);
         DefaultLineMapper<FxCsvRateRow> lineMapper = new DefaultLineMapper<>();
         lineMapper.setLineTokenizer(tokenizer);
         lineMapper.setFieldSetMapper(fieldSet -> new FxCsvRateRow(
