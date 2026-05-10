@@ -2,6 +2,8 @@ package com.crewmeister.cmcodingchallenge.currency.infrastructure;
 
 import com.crewmeister.cmcodingchallenge.currency.domain.FxRateEntity;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -17,5 +19,5 @@ public interface FxRateRepository extends JpaRepository<FxRateEntity, Long> {
 
     Optional<FxRateEntity> findTopByCurrencyAndRateDateLessThanEqualOrderByRateDateDesc(String currency, LocalDate rateDate);
 
-    List<FxRateEntity> findByCurrencyOrderByRateDateAsc(String currency);
+    Page<FxRateEntity> findByCurrencyOrderByRateDateAsc(String currency, Pageable pageable);
 }

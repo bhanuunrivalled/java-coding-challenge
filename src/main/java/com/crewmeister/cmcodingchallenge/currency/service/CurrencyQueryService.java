@@ -2,6 +2,8 @@ package com.crewmeister.cmcodingchallenge.currency.service;
 
 import com.crewmeister.cmcodingchallenge.currency.infrastructure.FxRateRepository;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -27,11 +29,9 @@ public class CurrencyQueryService {
                 .map(entity -> new FxRateDto(entity.getCurrency(), entity.getRateDate(), entity.getRate()));
     }
 
-    public List<FxRateDto> getAllRatesByCurrency(String currency) {
-        // FIXME PAGING
-        return fxRateRepository.findByCurrencyOrderByRateDateAsc(currency.trim().toUpperCase()).stream()
-                .map(entity -> new FxRateDto(entity.getCurrency(), entity.getRateDate(), entity.getRate()))
-                .toList();
+    public Page<FxRateDto> getRatesByCurrency(String currency, Pageable pageable) {
+        return fxRateRepository.findByCurrencyOrderByRateDateAsc(currency.trim().toUpperCase(), pageable)
+                .map(entity -> new FxRateDto(entity.getCurrency(), entity.getRateDate(), entity.getRate()));
     }
 
     public Optional<Double> convertToEur(String currency, double amount, LocalDate conversionDate) {

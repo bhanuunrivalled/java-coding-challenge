@@ -5,7 +5,11 @@ import com.crewmeister.cmcodingchallenge.currency.service.FxRateDto;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -58,18 +62,29 @@ public class CurrencyController {
         return new ResponseEntity<FxRateResponse>(response, HttpStatus.OK);
     }
 
-    @Operation(summary = "Get all known FX rates for a currency")
+    @Operation(summary = "Get known FX rates for a currency with pagination")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Paged FX rate history"),
+            @ApiResponse(responseCode = "400", description = "Invalid page or size parameter"),
+            @ApiResponse(responseCode = "404", description = "No rates found for the currency")
+    })
     @GetMapping("/rates/{currency}/history")
-    public ResponseEntity<List<FxRateResponse>> getRatesHistory(
+    public ResponseEntity<Page<FxRateResponse>> getRatesHistory(
             @Parameter(description = "Currency code", example = "AUD")
-            @PathVariable String currency) {
-        List<FxRateDto> rates = currencyQueryService.getAllRatesByCurrency(currency);
+            @PathVariable String currency,
+            @Parameter(description = "Zero-based page number", example = "0")
+            @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Number of rates per page", example = "100")
+            @RequestParam(defaultValue = "100") int size) {
+        if (page < 0 || size < 1) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "page must be >= 0 and size must be >= 1");
+        }
+        Page<FxRateDto> rates = currencyQueryService.getRatesByCurrency(currency, PageRequest.of(page, size));
         if (rates.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No rates found for currency " + currency);
         }
-        List<FxRateResponse> responses = rates.stream()
-                .map(r -> new FxRateResponse(r.currency(), r.rateDate(), r.rateDate(), r.rate()))
-                .toList();
+        Page<FxRateResponse> responses = rates.map(
+                r -> new FxRateResponse(r.currency(), r.rateDate(), r.rateDate(), r.rate()));
         return new ResponseEntity<>(responses, HttpStatus.OK);
     }
 

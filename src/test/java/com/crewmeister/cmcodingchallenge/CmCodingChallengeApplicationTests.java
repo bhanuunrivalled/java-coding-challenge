@@ -83,17 +83,18 @@ class CmCodingChallengeApplicationTests {
 	}
 
 	@Test
-	void should_return_all_rates_history_for_currency_sorted_by_date() throws Exception {
+	void should_return_rates_history_page_for_currency_sorted_by_date() throws Exception {
 		fxRateRepository.save(new FxRateEntity("D.AUD.A", "AUD", LocalDate.parse("2026-05-02"), 1.6500));
 		fxRateRepository.save(new FxRateEntity("D.AUD.A", "AUD", LocalDate.parse("2026-05-01"), 1.6432));
 		fxRateRepository.save(new FxRateEntity("D.AUD.A", "AUD", LocalDate.parse("2026-05-03"), 1.6550));
 
-		mockMvc.perform(get("/api/rates/AUD/history"))
+		mockMvc.perform(get("/api/rates/AUD/history").param("page", "0").param("size", "2"))
 				.andExpect(status().isOk())
 				.andExpect(content().json("""
-						[{"currency":"AUD","requestedDate":"2026-05-01","effectiveRateDate":"2026-05-01","rate":1.6432},
-						 {"currency":"AUD","requestedDate":"2026-05-02","effectiveRateDate":"2026-05-02","rate":1.6500},
-						 {"currency":"AUD","requestedDate":"2026-05-03","effectiveRateDate":"2026-05-03","rate":1.6550}]
+						{"content":[
+						 {"currency":"AUD","requestedDate":"2026-05-01","effectiveRateDate":"2026-05-01","rate":1.6432},
+						 {"currency":"AUD","requestedDate":"2026-05-02","effectiveRateDate":"2026-05-02","rate":1.6500}
+						],"number":0,"size":2,"totalElements":3,"totalPages":2}
 						"""));
 	}
 
@@ -101,6 +102,12 @@ class CmCodingChallengeApplicationTests {
 	void should_return_not_found_when_currency_has_no_rates_in_history() throws Exception {
 		mockMvc.perform(get("/api/rates/AUD/history"))
 				.andExpect(status().isNotFound());
+	}
+
+	@Test
+	void should_return_bad_request_when_history_page_request_is_invalid() throws Exception {
+		mockMvc.perform(get("/api/rates/AUD/history").param("page", "-1").param("size", "0"))
+				.andExpect(status().isBadRequest());
 	}
 
 	@Test
