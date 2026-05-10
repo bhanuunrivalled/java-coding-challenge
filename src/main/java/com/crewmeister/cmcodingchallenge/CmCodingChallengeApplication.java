@@ -9,5 +9,4 @@ public class CmCodingChallengeApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(CmCodingChallengeApplication.class, args);
 	}
-
 }

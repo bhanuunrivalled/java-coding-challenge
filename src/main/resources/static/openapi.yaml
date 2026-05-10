@@ -1,0 +1,89 @@
+openapi: 3.1.0
+info:
+  title: Crewmeister FX API
+  version: 0.1.0
+  description: |
+    API contract for local FX-rate lookups backed by Bundesbank data imported into H2.
+
+    Assumption:
+    - If a requested date has no numeric rate (weekend/holiday), API returns the latest
+      previous available business-day rate.
+    - Response includes both requestedDate and effectiveRateDate.
+paths:
+  /api/currencies:
+    get:
+      summary: List available currencies
+      responses:
+        '200':
+          description: Sorted distinct currency codes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                  example: AUD
+  /api/rates/{currency}:
+    get:
+      summary: Get EUR-FX rate for requested date (with holiday/weekend fallback)
+      parameters:
+        - name: currency
+          in: path
+          required: true
+          schema:
+            type: string
+            example: AUD
+        - name: date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+            example: 2026-05-01
+      responses:
+        '200':
+          description: Rate found for requested date or previous available date
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FxRateResponse'
+              examples:
+                exactDate:
+                  value:
+                    currency: AUD
+                    requestedDate: 2026-05-01
+                    effectiveRateDate: 2026-05-01
+                    rate: 1.6432
+                fallbackDate:
+                  value:
+                    currency: AUD
+                    requestedDate: 2026-05-01
+                    effectiveRateDate: 2026-04-30
+                    rate: 1.6393
+        '404':
+          description: No rate exists on or before requested date
+components:
+  schemas:
+    FxRateResponse:
+      type: object
+      required:
+        - currency
+        - requestedDate
+        - effectiveRateDate
+        - rate
+      properties:
+        currency:
+          type: string
+          example: AUD
+        requestedDate:
+          type: string
+          format: date
+          example: 2026-05-01
+        effectiveRateDate:
+          type: string
+          format: date
+          example: 2026-04-30
+        rate:
+          type: number
+          format: double
+          example: 1.6393
