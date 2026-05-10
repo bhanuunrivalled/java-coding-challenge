@@ -2,6 +2,7 @@ package com.crewmeister.cmcodingchallenge.currency.service;
 
 import com.crewmeister.cmcodingchallenge.currency.infrastructure.FxRateRepository;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -12,12 +13,15 @@ import java.util.Optional;
 
 @Service
 public class CurrencyQueryService {
+    public static final String AVAILABLE_CURRENCIES_CACHE = "availableCurrencies";
+
     private final FxRateRepository fxRateRepository;
 
     public CurrencyQueryService(FxRateRepository fxRateRepository) {
         this.fxRateRepository = fxRateRepository;
     }
 
+    @Cacheable(cacheNames = AVAILABLE_CURRENCIES_CACHE)
     public List<String> getAvailableCurrencies() {
         return fxRateRepository.findDistinctCurrencies();
     }

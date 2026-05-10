@@ -1,15 +1,20 @@
 package com.crewmeister.cmcodingchallenge.currency.batch;
 
+import com.crewmeister.cmcodingchallenge.currency.service.CurrencyQueryService;
 import com.crewmeister.cmcodingchallenge.currency.infrastructure.FxRateRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.Job;
+import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -27,6 +32,7 @@ public class FxBatchConfiguration {
     private final Job fullLoadJob;
     private final Job deltaLoadJob;
     private final FxRateRepository fxRateRepository;
+    private final CacheManager cacheManager;
 
     @Value("${fx.batch.full-load-on-startup}")
     private boolean fullLoadOnStartup;
@@ -34,11 +40,13 @@ public class FxBatchConfiguration {
     public FxBatchConfiguration(JobLauncher jobLauncher,
             @Qualifier("fullLoadJob") Job fullLoadJob,
             @Qualifier("deltaLoadJob") Job deltaLoadJob,
-            FxRateRepository fxRateRepository) {
+            FxRateRepository fxRateRepository,
+            CacheManager cacheManager) {
         this.jobLauncher = jobLauncher;
         this.fullLoadJob = fullLoadJob;
         this.deltaLoadJob = deltaLoadJob;
         this.fxRateRepository = fxRateRepository;
+        this.cacheManager = cacheManager;
     }
 
     /** On startup: full load only if table is empty — once, ever. */
@@ -66,10 +74,28 @@ public class FxBatchConfiguration {
 
     private void launchJob(Job job, JobParameters params) {
         try {
-            jobLauncher.run(job, params);
+            JobExecution execution = jobLauncher.run(job, params);
+            if (execution.getStatus() == BatchStatus.COMPLETED) {
+                evictAvailableCurrenciesCache(job.getName());
+            } else {
+                LOGGER.warn("Batch job '{}' finished with status {} - cache not evicted",
+                        job.getName(), execution.getStatus());
+            }
         } catch (Exception ex) {
             LOGGER.error("Batch job '{}' failed: {}", job.getName(), ex.getMessage(), ex);
         }
+    }
+
+    private void evictAvailableCurrenciesCache(String jobName) {
+        Cache cache = cacheManager.getCache(CurrencyQueryService.AVAILABLE_CURRENCIES_CACHE);
+        if (cache == null) {
+            LOGGER.warn("Cache '{}' is not configured - skipping eviction after '{}'",
+                    CurrencyQueryService.AVAILABLE_CURRENCIES_CACHE, jobName);
+            return;
+        }
+        cache.clear();
+        LOGGER.info("Evicted cache '{}' after successful '{}'",
+                CurrencyQueryService.AVAILABLE_CURRENCIES_CACHE, jobName);
     }
 
     private JobParameters fullLoadParams() {

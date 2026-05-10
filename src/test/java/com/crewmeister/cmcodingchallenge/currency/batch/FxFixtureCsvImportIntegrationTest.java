@@ -3,6 +3,7 @@ package com.crewmeister.cmcodingchallenge.currency.batch;
 import com.crewmeister.cmcodingchallenge.currency.domain.FxRateEntity;
 import com.crewmeister.cmcodingchallenge.currency.infrastructure.BundesbankClient;
 import com.crewmeister.cmcodingchallenge.currency.infrastructure.FxRateRepository;
+import com.crewmeister.cmcodingchallenge.currency.service.CurrencyQueryService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.batch.core.Job;
@@ -13,6 +14,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.io.Resource;
@@ -23,6 +25,7 @@ import org.springframework.web.client.RestClient;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -69,9 +72,21 @@ class FxFixtureCsvImportIntegrationTest {
     @Autowired
     private FxRateRepository fxRateRepository;
 
+    @Autowired
+    private CurrencyQueryService currencyQueryService;
+
+    @Autowired
+    private FxBatchConfiguration fxBatchConfiguration;
+
+    @Autowired
+    private CacheManager cacheManager;
+
     @BeforeEach
     void clearRates() {
         fxRateRepository.deleteAllInBatch();
+        if (cacheManager.getCache(CurrencyQueryService.AVAILABLE_CURRENCIES_CACHE) != null) {
+            cacheManager.getCache(CurrencyQueryService.AVAILABLE_CURRENCIES_CACHE).clear();
+        }
     }
 
     @Test
@@ -99,5 +114,16 @@ class FxFixtureCsvImportIntegrationTest {
                 "Dot-value rows must be skipped"
         );
         assertTrue(fxRateRepository.count() > 3, "Fixture should import multiple valid rows");
+    }
+
+    @Test
+    void should_refresh_available_currencies_cache_when_delta_load_completes() {
+        List<String> currenciesBeforeLoad = currencyQueryService.getAvailableCurrencies();
+        assertTrue(currenciesBeforeLoad.isEmpty(), "Precondition: cache starts with empty currency list");
+
+        fxBatchConfiguration.runDeltaLoad();
+
+        List<String> currenciesAfterLoad = currencyQueryService.getAvailableCurrencies();
+        assertFalse(currenciesAfterLoad.isEmpty(), "Cache should be evicted after successful delta load");
     }
 }

@@ -10,6 +10,7 @@ import java.time.LocalDate;
  * Fetches EUR exchange rate series as CSV — full history or a single day.
  * See:
  * https://www.bundesbank.de/en/statistics/time-series-databases/help-for-sdmx-web-service
+ * https://api.statistiken.bundesbank.de/doc/index.html?urls.primaryName=English%20REST%20API%20Documentation
  */
 @Service
 public class BundesbankClient {
@@ -45,7 +46,7 @@ public class BundesbankClient {
                         .path(DATA_PATH)
                         .queryParam("startPeriod", date.toString())
                         .queryParam("endPeriod", date.toString())
-                        .queryParam("detail", "dataonly")
+                        .queryParam("detail", "full")
                         .queryParam("format", "sdmx_csv")
                         .build(FLOW_REF, SERIES_KEY))
                 .retrieve()

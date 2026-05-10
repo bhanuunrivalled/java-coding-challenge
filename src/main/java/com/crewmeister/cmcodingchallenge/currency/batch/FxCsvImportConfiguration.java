@@ -22,16 +22,6 @@ import java.time.LocalDate;
 public class FxCsvImportConfiguration {
 
     private static final String LOAD_TYPE_FULL = "full";
-    private static final int DISABLED = 0;
-
-    /**
-     * When bundesbank.sample-size > 0 (dev profile), wraps the reader in a
-     * SamplingFxCsvReader that picks N random rows from the real API response.
-     * This lets dev verify the real CSV format without loading all history.
-     * Set to 0 (default) to disable sampling and load all rows.
-     */
-    @Value("${bundesbank.sample-size:0}")
-    private int sampleSize;
 
     @Bean
     @StepScope
@@ -49,9 +39,6 @@ public class FxCsvImportConfiguration {
         reader.setLinesToSkip(1);
         reader.setLineMapper(fxCsvLineMapper());
 
-        if (sampleSize > DISABLED) {
-            return new SamplingFxCsvReader(reader, sampleSize);
-        }
         return reader;
     }
 
