@@ -82,4 +82,65 @@ class CmCodingChallengeApplicationTests {
 				.andExpect(status().isNotFound());
 	}
 
+	@Test
+	void should_return_all_rates_history_for_currency_sorted_by_date() throws Exception {
+		fxRateRepository.save(new FxRateEntity("D.AUD.A", "AUD", LocalDate.parse("2026-05-02"), 1.6500));
+		fxRateRepository.save(new FxRateEntity("D.AUD.A", "AUD", LocalDate.parse("2026-05-01"), 1.6432));
+		fxRateRepository.save(new FxRateEntity("D.AUD.A", "AUD", LocalDate.parse("2026-05-03"), 1.6550));
+
+		mockMvc.perform(get("/api/rates/AUD/history"))
+				.andExpect(status().isOk())
+				.andExpect(content().json("""
+						[{"currency":"AUD","requestedDate":"2026-05-01","effectiveRateDate":"2026-05-01","rate":1.6432},
+						 {"currency":"AUD","requestedDate":"2026-05-02","effectiveRateDate":"2026-05-02","rate":1.6500},
+						 {"currency":"AUD","requestedDate":"2026-05-03","effectiveRateDate":"2026-05-03","rate":1.6550}]
+						"""));
+	}
+
+	@Test
+	void should_return_not_found_when_currency_has_no_rates_in_history() throws Exception {
+		mockMvc.perform(get("/api/rates/AUD/history"))
+				.andExpect(status().isNotFound());
+	}
+
+	@Test
+	void should_convert_amount_to_eur_at_exact_date() throws Exception {
+		fxRateRepository.save(new FxRateEntity("D.USD.A", "USD", LocalDate.parse("2026-05-01"), 1.1));
+
+		mockMvc.perform(get("/api/rates/convert")
+				.param("currency", "USD")
+				.param("amount", "100")
+				.param("date", "2026-05-01"))
+				.andExpect(status().isOk())
+				.andExpect(content().json("""
+						{"sourceCurrency":"USD","sourceAmount":100.0,"conversionDate":"2026-05-01","eurEquivalent":90.90909090909091}
+						"""));
+	}
+
+	@Test
+	void should_convert_to_eur_using_previous_business_day_rate() throws Exception {
+		fxRateRepository.save(new FxRateEntity("D.USD.A", "USD", LocalDate.parse("2026-04-30"), 1.05));
+		fxRateRepository.save(new FxRateEntity("D.USD.A", "USD", LocalDate.parse("2026-05-02"), 1.12));
+
+		mockMvc.perform(get("/api/rates/convert")
+				.param("currency", "USD")
+				.param("amount", "100")
+				.param("date", "2026-05-01"))
+				.andExpect(status().isOk())
+				.andExpect(content().json("""
+						{"sourceCurrency":"USD","sourceAmount":100.0,"conversionDate":"2026-05-01","eurEquivalent":95.23809523809524}
+						"""));
+	}
+
+	@Test
+	void should_return_not_found_when_converting_with_no_available_rate() throws Exception {
+		fxRateRepository.save(new FxRateEntity("D.USD.A", "USD", LocalDate.parse("2026-05-02"), 1.1));
+
+		mockMvc.perform(get("/api/rates/convert")
+				.param("currency", "USD")
+				.param("amount", "100")
+				.param("date", "2026-05-01"))
+				.andExpect(status().isNotFound());
+	}
+
 }

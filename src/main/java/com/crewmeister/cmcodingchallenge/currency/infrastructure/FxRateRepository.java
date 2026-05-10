@@ -16,4 +16,6 @@ public interface FxRateRepository extends JpaRepository<FxRateEntity, Long> {
     Optional<FxRateEntity> findByCurrencyAndRateDate(String currency, LocalDate rateDate);
 
     Optional<FxRateEntity> findTopByCurrencyAndRateDateLessThanEqualOrderByRateDateDesc(String currency, LocalDate rateDate);
+
+    List<FxRateEntity> findByCurrencyOrderByRateDateAsc(String currency);
 }

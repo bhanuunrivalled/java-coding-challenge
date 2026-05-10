@@ -1,7 +1,6 @@
 package com.crewmeister.cmcodingchallenge.currency.service;
 
 import com.crewmeister.cmcodingchallenge.currency.infrastructure.FxRateRepository;
-import com.crewmeister.cmcodingchallenge.currency.domain.FxRateEntity;
 
 import org.springframework.stereotype.Service;
 
@@ -21,9 +20,22 @@ public class CurrencyQueryService {
         return fxRateRepository.findDistinctCurrencies();
     }
 
-    public Optional<FxRateEntity> getRateAtOrBeforeDate(String currency, LocalDate requestedDate) {
+    public Optional<FxRateDto> getRateAtOrBeforeDate(String currency, LocalDate requestedDate) {
         return fxRateRepository.findTopByCurrencyAndRateDateLessThanEqualOrderByRateDateDesc(
                 currency.trim().toUpperCase(),
-                requestedDate);
+                requestedDate)
+                .map(entity -> new FxRateDto(entity.getCurrency(), entity.getRateDate(), entity.getRate()));
+    }
+
+    public List<FxRateDto> getAllRatesByCurrency(String currency) {
+        // FIXME PAGING
+        return fxRateRepository.findByCurrencyOrderByRateDateAsc(currency.trim().toUpperCase()).stream()
+                .map(entity -> new FxRateDto(entity.getCurrency(), entity.getRateDate(), entity.getRate()))
+                .toList();
+    }
+
+    public Optional<Double> convertToEur(String currency, double amount, LocalDate conversionDate) {
+        return getRateAtOrBeforeDate(currency, conversionDate)
+                .map(rate -> amount / rate.rate());
     }
 }
