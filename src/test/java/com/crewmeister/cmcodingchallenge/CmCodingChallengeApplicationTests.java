@@ -51,4 +51,35 @@ class CmCodingChallengeApplicationTests {
 				.andExpect(content().json("[\"CHF\",\"USD\"]"));
 	}
 
+	@Test
+	void should_return_exact_rate_when_requested_day_exists() throws Exception {
+		fxRateRepository.save(new FxRateEntity("D.AUD.A", "AUD", LocalDate.parse("2026-05-01"), 1.6432));
+
+		mockMvc.perform(get("/api/rates/AUD").param("date", "2026-05-01"))
+				.andExpect(status().isOk())
+				.andExpect(content().json("""
+						{"currency":"AUD","requestedDate":"2026-05-01","effectiveRateDate":"2026-05-01","rate":1.6432}
+						"""));
+	}
+
+	@Test
+	void should_return_previous_business_day_rate_when_requested_day_has_no_rate() throws Exception {
+		fxRateRepository.save(new FxRateEntity("D.AUD.A", "AUD", LocalDate.parse("2026-04-30"), 1.6393));
+		fxRateRepository.save(new FxRateEntity("D.AUD.A", "AUD", LocalDate.parse("2026-05-02"), 1.6500));
+
+		mockMvc.perform(get("/api/rates/AUD").param("date", "2026-05-01"))
+				.andExpect(status().isOk())
+				.andExpect(content().json("""
+						{"currency":"AUD","requestedDate":"2026-05-01","effectiveRateDate":"2026-04-30","rate":1.6393}
+						"""));
+	}
+
+	@Test
+	void should_return_not_found_when_no_rate_exists_on_or_before_requested_day() throws Exception {
+		fxRateRepository.save(new FxRateEntity("D.AUD.A", "AUD", LocalDate.parse("2026-05-02"), 1.6500));
+
+		mockMvc.perform(get("/api/rates/AUD").param("date", "2026-05-01"))
+				.andExpect(status().isNotFound());
+	}
+
 }
