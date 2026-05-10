@@ -4,6 +4,7 @@ import com.crewmeister.cmcodingchallenge.currency.domain.FxRateEntity;
 import com.crewmeister.cmcodingchallenge.currency.infrastructure.BundesbankClient;
 import jakarta.persistence.EntityManagerFactory;
 import org.springframework.batch.core.configuration.annotation.StepScope;
+import org.springframework.batch.item.ItemStreamReader;
 import org.springframework.batch.item.database.JpaItemWriter;
 import org.springframework.batch.item.file.FlatFileItemReader;
 import org.springframework.batch.item.file.LineMapper;
@@ -21,15 +22,20 @@ import java.time.LocalDate;
 public class FxCsvImportConfiguration {
 
     private static final String LOAD_TYPE_FULL = "full";
+    private static final int DISABLED = 0;
 
     /**
-     * Reader is step-scoped so the HTTP call to Bundesbank happens at job execution
-     * time, not at Spring context startup. loadType="full" fetches all history;
-     * loadType="delta" fetches only the date passed as a job parameter.
+     * When bundesbank.sample-size > 0 (dev profile), wraps the reader in a
+     * SamplingFxCsvReader that picks N random rows from the real API response.
+     * This lets dev verify the real CSV format without loading all history.
+     * Set to 0 (default) to disable sampling and load all rows.
      */
+    @Value("${bundesbank.sample-size:0}")
+    private int sampleSize;
+
     @Bean
     @StepScope
-    FlatFileItemReader<FxCsvRateRow> fxCsvReader(
+    ItemStreamReader<FxCsvRateRow> fxCsvReader(
             BundesbankClient bundesbankClient,
             @Value("#{jobParameters['loadType']}") String loadType,
             @Value("#{jobParameters['date']}") String date) {
@@ -42,6 +48,10 @@ public class FxCsvImportConfiguration {
         reader.setResource(new ByteArrayResource(csv.getBytes(StandardCharsets.UTF_8)));
         reader.setLinesToSkip(1);
         reader.setLineMapper(fxCsvLineMapper());
+
+        if (sampleSize > DISABLED) {
+            return new SamplingFxCsvReader(reader, sampleSize);
+        }
         return reader;
     }
 
@@ -50,11 +60,14 @@ public class FxCsvImportConfiguration {
         DelimitedLineTokenizer tokenizer = new DelimitedLineTokenizer();
         tokenizer.setDelimiter(";");
         tokenizer.setNames(
-                "DATAFLOW", "BBK_STD_FREQ", "BBK_STD_CURRENCY",
-                "BBK_ERX_PARTNER_CURRENCY", "BBK_ERX_SERIES_TYPE",
-                "BBK_ERX_RATE_TYPE", "BBK_ERX_SUFFIX",
-                "TIME_PERIOD", "OBS_VALUE", "TIME_FORMAT",
-                "BBK_DECIMALS", "BBK_ID");
+            "DATAFLOW", "BBK_STD_FREQ", "BBK_STD_CURRENCY",
+            "BBK_ERX_PARTNER_CURRENCY", "BBK_ERX_SERIES_TYPE",
+            "BBK_ERX_RATE_TYPE", "BBK_ERX_SUFFIX",
+            "TIME_PERIOD", "OBS_VALUE", "TIME_FORMAT",
+            "BBK_DECIMALS", "BBK_ID", "BBK_UNIT",
+            "BBK_UNIT_MULT", "BBK_TITLE", "WEB_CATEGORY",
+                "BBK_COMM_GEN", "BBK_COMM_SRC", "OBS_STATUS",
+                "BBK_DIFF", "EXTRA_EMPTY");
 
         DefaultLineMapper<FxCsvRateRow> lineMapper = new DefaultLineMapper<>();
         lineMapper.setLineTokenizer(tokenizer);

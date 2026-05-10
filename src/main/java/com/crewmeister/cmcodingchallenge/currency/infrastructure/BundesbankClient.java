@@ -1,6 +1,5 @@
 package com.crewmeister.cmcodingchallenge.currency.infrastructure;
 
-import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
@@ -17,7 +16,6 @@ public class BundesbankClient {
 
     private static final String FLOW_REF = "BBEX3";
     private static final String SERIES_KEY = "D..EUR.BB.AC.000";
-    private static final String CSV_ACCEPT = "text/csv";
     private static final String DATA_PATH = "/data/{flowRef}/{key}";
 
     private final RestClient restClient;
@@ -34,8 +32,8 @@ public class BundesbankClient {
                 .uri(uriBuilder -> uriBuilder
                         .path(DATA_PATH)
                         .queryParam("detail", "full")
+                        .queryParam("format", "sdmx_csv")
                         .build(FLOW_REF, SERIES_KEY))
-                .header(HttpHeaders.ACCEPT, CSV_ACCEPT)
                 .retrieve()
                 .body(String.class);
     }
@@ -48,8 +46,8 @@ public class BundesbankClient {
                         .queryParam("startPeriod", date.toString())
                         .queryParam("endPeriod", date.toString())
                         .queryParam("detail", "dataonly")
+                        .queryParam("format", "sdmx_csv")
                         .build(FLOW_REF, SERIES_KEY))
-                .header(HttpHeaders.ACCEPT, CSV_ACCEPT)
                 .retrieve()
                 .body(String.class);
     }

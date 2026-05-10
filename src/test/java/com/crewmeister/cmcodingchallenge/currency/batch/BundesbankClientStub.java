@@ -22,7 +22,7 @@ public class BundesbankClientStub {
     private Resource fixtureCsv;
 
     @Bean
-    @Primary
+    @Primary // TODO Understand this primary
     BundesbankClient bundesbankClient() {
         return new BundesbankClient(null) {
             @Override
