@@ -28,9 +28,10 @@ public class BundesbankClient {
 
         private final RestClient restClient;
 
-        public BundesbankClient(RestClient.Builder restClientBuilder) {
+        public BundesbankClient(RestClient.Builder restClientBuilder,
+                        @org.springframework.beans.factory.annotation.Value("${bundesbank.api.base-url}") String baseUrl) {
                 this.restClient = restClientBuilder
-                                .baseUrl("https://api.statistiken.bundesbank.de/rest")
+                                .baseUrl(baseUrl)
                                 .build();
         }
 

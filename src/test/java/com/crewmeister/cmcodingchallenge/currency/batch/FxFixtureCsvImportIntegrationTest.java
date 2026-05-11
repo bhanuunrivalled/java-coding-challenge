@@ -38,8 +38,9 @@ class FxFixtureCsvImportIntegrationTest {
     static class FixtureClientConfiguration {
         @Bean
         @Primary
-        BundesbankClient bundesbankClient(@Value("${bundesbank.fixture.path}") Resource fixtureCsv) {
-            return new BundesbankClient(RestClient.builder()) {
+        BundesbankClient bundesbankClient(@Value("${bundesbank.fixture.path}") Resource fixtureCsv,
+                @Value("${bundesbank.api.base-url}") String baseUrl) {
+            return new BundesbankClient(RestClient.builder(), baseUrl) {
                 @Override
                 public String fetchFullLoadCsv() {
                     return readFixtureCsv(fixtureCsv);

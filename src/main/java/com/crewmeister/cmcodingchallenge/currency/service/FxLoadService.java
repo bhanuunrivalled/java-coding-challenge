@@ -48,6 +48,7 @@ public class FxLoadService {
 
     /**
      * On startup: run full load only when enabled and the store is empty.
+     * Never crashes the application — logs the error and lets the service start.
      */
     public void executeStartupFullLoadIfEnabledAndEmpty(boolean fullLoadOnStartup) {
         if (!fullLoadOnStartup) {
@@ -59,7 +60,13 @@ public class FxLoadService {
             return;
         }
         LOGGER.info("FX rate store is empty - starting full load");
-        executeFullLoad();
+        try {
+            executeFullLoad();
+        } catch (Exception ex) {
+            LOGGER.error("Startup full load failed — service will start without data. " +
+                    "Trigger manually via POST /api/batch/delta once the API is available. Error: {}",
+                    ex.getMessage());
+        }
     }
 
     /** Runs the full load job. Clears existing data and imports all history. */
