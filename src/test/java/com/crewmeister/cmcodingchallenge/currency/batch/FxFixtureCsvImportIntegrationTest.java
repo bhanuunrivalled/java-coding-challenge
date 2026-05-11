@@ -25,7 +25,6 @@ import org.springframework.web.client.RestClient;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -47,7 +46,7 @@ class FxFixtureCsvImportIntegrationTest {
                 }
 
                 @Override
-                public String fetchDeltaCsv(LocalDate date) {
+                public String fetchDeltaCsv(LocalDate startDate, LocalDate endDate) {
                     return readFixtureCsv(fixtureCsv);
                 }
 
@@ -93,7 +92,9 @@ class FxFixtureCsvImportIntegrationTest {
     void should_import_fixture_rows_into_table_and_skip_dot_rows() throws Exception {
         jobLauncher.run(fullLoadJob, new JobParametersBuilder()
                 .addString("loadType", "full")
-                .addString("date", "2026-01-31")
+                .addString("startDate", "1970-01-01")
+                .addString("endDate", "2026-01-31")
+                .addLong("runId", 1L)
                 .toJobParameters());
 
         FxRateEntity jan02 = fxRateRepository.findByCurrencyAndRateDate("AUD", LocalDate.parse("2026-01-02"))
@@ -111,19 +112,15 @@ class FxFixtureCsvImportIntegrationTest {
 
         assertFalse(
                 fxRateRepository.findByCurrencyAndRateDate("AUD", LocalDate.parse("2026-01-01")).isPresent(),
-                "Dot-value rows must be skipped"
-        );
+                "Dot-value rows must be skipped");
         assertTrue(fxRateRepository.count() > 3, "Fixture should import multiple valid rows");
     }
 
     @Test
-    void should_refresh_available_currencies_cache_when_delta_load_completes() {
-        List<String> currenciesBeforeLoad = currencyQueryService.getAvailableCurrencies();
-        assertTrue(currenciesBeforeLoad.isEmpty(), "Precondition: cache starts with empty currency list");
-
+    void should_skip_delta_load_when_database_is_empty() {
+        // DB is empty after @BeforeEach — delta load should be skipped gracefully
         fxBatchConfiguration.runDeltaLoad();
-
-        List<String> currenciesAfterLoad = currencyQueryService.getAvailableCurrencies();
-        assertFalse(currenciesAfterLoad.isEmpty(), "Cache should be evicted after successful delta load");
+        // No exception = guard worked correctly (DeltaLoadService returns SkippedEmpty)
+        assertTrue(fxRateRepository.count() == 0, "No rates should be loaded when guard skips");
     }
 }

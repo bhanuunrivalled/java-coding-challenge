@@ -15,9 +15,13 @@ public interface FxRateRepository extends JpaRepository<FxRateEntity, Long> {
     @Query("select distinct f.currency from FxRateEntity f order by f.currency asc")
     List<String> findDistinctCurrencies();
 
+    @Query("SELECT MAX(f.rateDate) FROM FxRateEntity f")
+    Optional<LocalDate> findMaxRateDate();
+
     Optional<FxRateEntity> findByCurrencyAndRateDate(String currency, LocalDate rateDate);
 
-    Optional<FxRateEntity> findTopByCurrencyAndRateDateLessThanEqualOrderByRateDateDesc(String currency, LocalDate rateDate);
+    Optional<FxRateEntity> findTopByCurrencyAndRateDateLessThanEqualOrderByRateDateDesc(String currency,
+            LocalDate rateDate);
 
     Page<FxRateEntity> findByCurrencyOrderByRateDateAsc(String currency, Pageable pageable);
 }

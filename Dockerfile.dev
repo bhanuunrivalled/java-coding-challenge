@@ -1,0 +1,19 @@
+# ── Development image ─────────────────────────────────────────────────────────
+# Single-stage, devtools active, H2 console enabled.
+# Mount source for live reload:
+#   docker run -v $(pwd):/workspace -p 8080:8080 fx-service-dev
+FROM eclipse-temurin:21-jdk
+WORKDIR /workspace
+
+# Cache dependencies layer separately from source
+COPY .mvn/ .mvn/
+COPY mvnw pom.xml ./
+RUN ./mvnw dependency:go-offline -q
+
+COPY src/ src/
+
+ENV SPRING_PROFILES_ACTIVE=dev
+
+EXPOSE 8080
+
+ENTRYPOINT ["./mvnw", "spring-boot:run"]

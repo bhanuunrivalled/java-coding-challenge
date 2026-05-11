@@ -28,11 +28,12 @@ public class FxCsvImportConfiguration {
     ItemStreamReader<FxCsvRateRow> fxCsvReader(
             BundesbankClient bundesbankClient,
             @Value("#{jobParameters['loadType']}") String loadType,
-            @Value("#{jobParameters['date']}") String date) {
+            @Value("#{jobParameters['startDate']}") String startDate,
+            @Value("#{jobParameters['endDate']}") String endDate) {
 
         String csv = LOAD_TYPE_FULL.equals(loadType)
                 ? bundesbankClient.fetchFullLoadCsv()
-                : bundesbankClient.fetchDeltaCsv(LocalDate.parse(date));
+                : bundesbankClient.fetchDeltaCsv(LocalDate.parse(startDate), LocalDate.parse(endDate));
 
         FlatFileItemReader<FxCsvRateRow> reader = new FlatFileItemReader<>();
         reader.setResource(new ByteArrayResource(csv.getBytes(StandardCharsets.UTF_8)));
@@ -47,12 +48,12 @@ public class FxCsvImportConfiguration {
         DelimitedLineTokenizer tokenizer = new DelimitedLineTokenizer();
         tokenizer.setDelimiter(";");
         tokenizer.setNames(
-            "DATAFLOW", "BBK_STD_FREQ", "BBK_STD_CURRENCY",
-            "BBK_ERX_PARTNER_CURRENCY", "BBK_ERX_SERIES_TYPE",
-            "BBK_ERX_RATE_TYPE", "BBK_ERX_SUFFIX",
-            "TIME_PERIOD", "OBS_VALUE", "TIME_FORMAT",
-            "BBK_DECIMALS", "BBK_ID", "BBK_UNIT",
-            "BBK_UNIT_MULT", "BBK_TITLE", "WEB_CATEGORY",
+                "DATAFLOW", "BBK_STD_FREQ", "BBK_STD_CURRENCY",
+                "BBK_ERX_PARTNER_CURRENCY", "BBK_ERX_SERIES_TYPE",
+                "BBK_ERX_RATE_TYPE", "BBK_ERX_SUFFIX",
+                "TIME_PERIOD", "OBS_VALUE", "TIME_FORMAT",
+                "BBK_DECIMALS", "BBK_ID", "BBK_UNIT",
+                "BBK_UNIT_MULT", "BBK_TITLE", "WEB_CATEGORY",
                 "BBK_COMM_GEN", "BBK_COMM_SRC", "OBS_STATUS",
                 "BBK_DIFF", "EXTRA_EMPTY");
         tokenizer.setStrict(false);

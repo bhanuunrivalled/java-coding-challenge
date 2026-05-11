@@ -2,6 +2,7 @@ package com.crewmeister.cmcodingchallenge.currency.service;
 
 import com.crewmeister.cmcodingchallenge.currency.infrastructure.FxRateRepository;
 
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -24,6 +25,10 @@ public class CurrencyQueryService {
     @Cacheable(cacheNames = AVAILABLE_CURRENCIES_CACHE)
     public List<String> getAvailableCurrencies() {
         return fxRateRepository.findDistinctCurrencies();
+    }
+
+    @CacheEvict(cacheNames = AVAILABLE_CURRENCIES_CACHE, allEntries = true)
+    public void evictCurrenciesCache() {
     }
 
     public Optional<FxRateDto> getRateAtOrBeforeDate(String currency, LocalDate requestedDate) {
